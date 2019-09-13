@@ -1,2 +1,5 @@
 scikit-learn
 matplotlib
+numpy
+pandas
+util@git+https://git@github.com/dertilo/util.git#egg=util
