@@ -1,16 +1,15 @@
+from sklearn.impute import SimpleImputer
 from typing import List, Tuple, Dict
 
 import numpy as np
 from scipy.sparse import hstack
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.preprocessing import Imputer, MultiLabelBinarizer
+from sklearn.preprocessing import MultiLabelBinarizer
 
-from text_processing.text_classification_util import multifeature_tokenize
-from .util_methods import TimeDiff
-
+# fmt: off
 feature_names = ['other','numeric', 'mainly_numeric', 'allLower', 'allUpper', 'initialUpper', 'contains_digit',
                  'not_identifier']
+# fmt: on
 
 
 def getCasing(word:str)->str:
@@ -50,9 +49,9 @@ class NumericFeatureGetter(BaseEstimator, TransformerMixin):
         return self.feature_names
     def fit(self, data, y=None):
         # dt = TimeDiff()
-        self.imps:Dict[str,Imputer] = {}
+        self.imps:Dict[str,SimpleImputer] = {}
         for feat in self.feature_names:
-            self.imps[feat] = Imputer(missing_values='NaN', strategy='median', axis=0)
+            self.imps[feat] = SimpleImputer(strategy='median')
             x = np.array([d[feat] for d in data]).reshape(-1, 1)
             self.imps[feat].fit(x)
         # dt.print('done fitting NumericFeatureGetter')
@@ -105,49 +104,3 @@ class FeatureBinarizer(BaseEstimator, TransformerMixin):
         return X_bin
     def get_feature_names(self):
         return self.feature_names
-
-
-class BagOfWordsFeatures(BaseEstimator, TransformerMixin):
-
-    def __init__(self, text_fields, vectorizer=TfidfVectorizer()):
-        self.vectorizer = vectorizer
-        self.vectorizer.preprocessor = lambda x:x
-        self.vectorizer.tokenizer = lambda x:x
-        self.text_fields = text_fields
-
-    def datum_to_bow(self,datum:Dict):
-        return multifeature_tokenize(datum,self.text_fields,prefix_or_tuples=True)
-
-    def fit(self, data:List[Dict],dummy=None):
-        self.vectorizer.fit((self.datum_to_bow(d) for d in data))
-        self.feature_names = self.vectorizer.get_feature_names()
-        print('vocabulary size of bag-of-words: ' + str(len(self.vectorizer.vocabulary_)))
-        return self
-
-    def transform(self,data):
-        return self.vectorizer.transform((self.datum_to_bow(d) for d in data))
-
-    def get_feature_names(self):
-        return self.vectorizer.get_feature_names()
-
-
-def calc_entity_distance_sequences(token_spans:List[Tuple[int, int, str]],
-                                   entity_start_ends:List[Tuple[int, int]],
-                                   min_max_offset:Tuple[int,int],
-                                   normalize_by=1.0,
-                                   )->List[List[float]]:
-    def calc_closest_token_start_or_end(char_pos,start_flag = True):
-        return min([i for i in range(len(token_spans))], key=lambda pos: np.abs(char_pos - token_spans[pos][0 if start_flag else 1]))
-
-    entity_token_start_ends = [(calc_closest_token_start_or_end(start,start_flag=True),
-                           calc_closest_token_start_or_end(start,start_flag=False))
-                          for start,end in entity_start_ends]
-    minimum,maximum = min_max_offset[0], min_max_offset[1]
-    def calc_distance(k,ent_start,ent_end):
-        if np.abs(k-ent_start)<np.abs(k-ent_end):
-            return max(minimum, min(maximum, k - ent_start)) / normalize_by
-        else:
-            return max(minimum, min(maximum, k - ent_end)) / normalize_by
-
-    return [ [calc_distance(k,ent_start,ent_end) for ent_start,ent_end in entity_token_start_ends]
-             for k in range(len(token_spans))]

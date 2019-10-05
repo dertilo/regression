@@ -1,7 +1,10 @@
 import os
 
 import numpy
+from sklearn.model_selection import train_test_split
 
+from feature_extraction import NumericFeatureGetter
+from rossmann_data import read_or_process_data
 from rossmann_sales_kaggle_benchmarking_regression_methods import score_trained_regressor
 
 from sklearn.neural_network import MLPRegressor
@@ -13,16 +16,10 @@ from time import time
 
 if __name__ == '__main__':
 
-    ###################################################################################################################
-    #           loading data
-    path = os.getcwd()
+    path = os.getcwd()+"/data"
     train_data_dicts,categorical_features, numerical_features = read_or_process_data(path)
-    X_train, X_valid = train_test_split(train_data_dicts, test_size=0.2, random_state=10)
-    # return X_train,X_valid,categorical_features, numerical_features
+    train_data_dicts, test_data_dicts = train_test_split(train_data_dicts, test_size=0.2, random_state=10)
 
-    train_data_dicts, test_data_dicts, categorical_features, numerical_features = get_rossmann_data(path + '/data',
-                                                                                                    limit=120000
-                                                                                                    )
     y_train_list = [d['target'] for d in train_data_dicts]
     y_test_list = [d['target'] for d in test_data_dicts]
     print('got %d train-samples' % len(train_data_dicts))
@@ -36,7 +33,6 @@ if __name__ == '__main__':
     ###################################################################################################################
     #      defining Feature-Extractor objects
 
-    dt = TimeDiff()
     num_getter = NumericFeatureGetter(numerical_features)
     preprocessed_numeric_features = Pipeline([
         ('numeric_features', num_getter),
