@@ -87,7 +87,7 @@ def read_csvs_build_features(path):
     return train_df, features
 
 
-def read_or_process_data(path):
+def read_or_process_data(path,limit:int=None):
     tmp_train_data_file = "/tmp/train_data.jsonl.gz"
     tmp_meta_file = "/tmp/meta_data.jsonl"
     if not os.path.exists(tmp_train_data_file):
@@ -136,9 +136,5 @@ def read_or_process_data(path):
 
 
 if __name__ == "__main__":
-    path = "/home/tilo/code/ML/regression/data"
+    path = "data"
     train_df, features = read_csvs_build_features(path)
-
-    # train_data_dicts,categorical_features, numerical_features = read_or_process_data(path)
-    # X_train, X_valid = train_test_split(train_data_dicts, test_size=0.2, random_state=10)
-    # return X_train,X_valid,categorical_features, numerical_features
