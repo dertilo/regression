@@ -15,19 +15,24 @@ from time import time
 
 
 def rmspe(ys, yhats):
-    return np.sqrt(np.mean([(yhat/y-1) ** 2 for yhat,y in zip(yhats,ys)]))
+    return np.sqrt(np.mean([(yhat / y - 1) ** 2 for yhat, y in zip(yhats, ys)]))
+
 
 def rmspe_xg(yhat, y):
     y = np.expm1(y.get_label())
     yhat = np.expm1(yhat)
-    return rmspe(y,yhat)
+    return rmspe(y, yhat)
 
-def score_trained_regressor(regressor,train_data_dicts,y_train_list,test_data_dicts,y_test_list):
+
+def score_trained_regressor(
+    regressor, train_data_dicts, y_train_list, test_data_dicts, y_test_list
+):
     yhat = regressor.predict(test_data_dicts)
     yhat_train = regressor.predict(train_data_dicts)
     train_score = rmspe(np.expm1(y_train_list), np.expm1(yhat_train))
     test_score = rmspe(np.expm1(y_test_list), np.expm1(yhat))
-    return train_score,test_score
+    return train_score, test_score
+
 
 if __name__ == "__main__":
 
